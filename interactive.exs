@@ -612,6 +612,41 @@ defmodule HackathonInteractive do
     mentoría_menu()
   end
 
+  # 6. REPORTES DEL SISTEMA
+  defp reportes_menu do
+    IO.puts("""
+    \n\e[35m
+     REPORTES DEL SISTEMA
+    =======================
+    \e[0m
+    """)
+
+    # Equipos
+    case Hackathon.TeamManagement.list_teams() do
+      {:ok, equipos} ->
+        IO.puts(" EQUIPOS: #{length(equipos)}")
+        Enum.each(equipos, fn equipo ->
+          IO.puts("    #{equipo.name} - #{equipo.category} (#{equipo.participant_count} miembros)")
+        end)
+      _ -> IO.puts(" EQUIPOS: Error al cargar")
+    end
+
+    # Proyectos por categoría
+    categorias = ["Inteligencia Artificial", "Desarrollo Web", "Data Science", "Mobile Development", "Blockchain"]
+    IO.puts("\n PROYECTOS POR CATEGORÍA:")
+    Enum.each(categorias, fn categoria ->
+      case Hackathon.ProjectRegistry.get_projects_by_category(categoria) do
+        {:ok, proyectos} when proyectos != [] ->
+          IO.puts("    #{categoria}: #{length(proyectos)} proyectos")
+        _ -> :ok
+      end
+    end)
+
+    IO.write("\n Presiona Enter para volver al menú principal...")
+    IO.read(:line)
+    main_menu()
+  end
+
 end
 
 # Iniciar el sistema interactivo
