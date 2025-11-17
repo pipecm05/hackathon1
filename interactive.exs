@@ -247,6 +247,131 @@ defmodule HackathonInteractive do
 
     equipos_menu()
   end
+
+
+  # 3. MENÚ DE PROYECTOS
+  defp proyectos_menu do
+    IO.puts("""
+    \n\e[34m
+     GESTIÓN DE PROYECTOS
+    =======================
+
+    1. Registrar nuevo proyecto
+    2. Actualizar avance de proyecto
+    3. Ver proyecto de equipo
+    4. Listar proyectos por categoría
+    5. Volver al menú principal
+    \e[0m
+    """)
+
+    IO.write(" Selecciona una opción (1-5): ")
+
+    case IO.read(:line) |> String.trim() do
+      "1" -> registrar_proyecto()
+      "2" -> actualizar_proyecto()
+      "3" -> ver_proyecto_equipo()
+      "4" -> listar_proyectos_categoria()
+      "5" -> main_menu()
+      _ ->
+        IO.puts("\e[31m Opción inválida\e[0m")
+        proyectos_menu()
+    end
+  end
+
+  defp registrar_proyecto do
+    IO.puts("\n REGISTRAR NUEVO PROYECTO")
+    IO.write("   ID del equipo: ")
+    equipo_id = IO.read(:line) |> String.trim()
+
+    IO.write("   Nombre del proyecto: ")
+    nombre = IO.read(:line) |> String.trim()
+
+    IO.write("   Descripción: ")
+    descripcion = IO.read(:line) |> String.trim()
+
+    IO.write("   Categoría: ")
+    categoria = IO.read(:line) |> String.trim()
+
+    case Hackathon.ProjectRegistry.register_project(equipo_id, nombre, descripcion, categoria) do
+      {:ok, proyecto} ->
+        IO.puts("\e[32m Proyecto registrado: #{proyecto.name}\e[0m")
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    proyectos_menu()
+  end
+
+  defp actualizar_proyecto do
+    IO.puts("\n ACTUALIZAR AVANCE DE PROYECTO")
+    IO.write("   ID del equipo: ")
+    equipo_id = IO.read(:line) |> String.trim()
+
+    IO.write("   Mensaje de avance: ")
+    mensaje = IO.read(:line) |> String.trim()
+
+    :ok = Hackathon.ProjectRegistry.update_project(equipo_id, mensaje)
+    IO.puts("\e[32m Avance registrado para el equipo: #{equipo_id}\e[0m")
+
+    proyectos_menu()
+  end
+
+  defp ver_proyecto_equipo do
+    IO.puts("\n VER PROYECTO DE EQUIPO")
+    IO.write("   ID del equipo: ")
+    equipo_id = IO.read(:line) |> String.trim()
+
+    case Hackathon.ProjectRegistry.get_team_project(equipo_id) do
+      {:ok, proyecto} ->
+        IO.puts("""
+        \e[33m
+         PROYECTO: #{proyecto.name}
+         Descripción: #{proyecto.description}
+         Categoría: #{proyecto.category}
+         Actualizaciones: #{length(proyecto.updates)}
+        \e[0m
+        """)
+
+        # Mostrar últimas actualizaciones
+        if proyecto.updates != [] do
+          IO.puts("   Últimas actualizaciones:")
+          Enum.take(proyecto.updates, 3) |> Enum.each(fn update ->
+            IO.puts("    #{update.message}")
+          end)
+        end
+
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    proyectos_menu()
+  end
+
+  # FUNCIÓN FALTANTE - AÑADIR ESTA
+  defp listar_proyectos_categoria do
+    IO.puts("\n LISTAR PROYECTOS POR CATEGORÍA")
+    IO.write("   Categoría (IA, Web, Mobile, Data, Blockchain): ")
+    categoria = IO.read(:line) |> String.trim()
+
+    case Hackathon.ProjectRegistry.get_projects_by_category(categoria) do
+      {:ok, proyectos} ->
+        if Enum.empty?(proyectos) do
+          IO.puts("   No hay proyectos en la categoría: #{categoria}")
+        else
+          IO.puts("   Proyectos en #{categoria}:")
+          Enum.each(proyectos, fn proyecto ->
+            IO.puts("    #{proyecto.name} - Equipo: #{proyecto.team_id}")
+            IO.puts("       #{proyecto.description}")
+            IO.puts("")
+          end)
+        end
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    proyectos_menu()
+  end
+
 end
 
 # Iniciar el sistema interactivo
