@@ -483,6 +483,135 @@ defmodule HackathonInteractive do
     chat_menu()
   end
 
+  # 5. MENÚ DE MENTORÍA
+  defp mentoría_menu do
+    IO.puts("""
+    \n\e[34m
+    SISTEMA DE MENTORÍA
+    ===================
+
+    1. Registrar mentor
+    2. Asignar mentor a equipo
+    3. Enviar consulta
+    4. Enviar feedback
+    5. Ver feedback de equipo
+    6. Volver al menú principal
+    \e[0m
+    """)
+
+    IO.write(" Selecciona una opción (1-6): ")
+
+    case IO.read(:line) |> String.trim() do
+      "1" -> registrar_mentor()
+      "2" -> asignar_mentor()
+      "3" -> enviar_consulta()
+      "4" -> enviar_feedback()
+      "5" -> ver_feedback_equipo()
+      "6" -> main_menu()
+      _ ->
+        IO.puts("\e[31m Opción inválida\e[0m")
+        mentoría_menu()
+    end
+  end
+
+  defp registrar_mentor do
+    IO.puts("\n REGISTRAR MENTOR")
+    IO.write("   ID del mentor: ")
+    mentor_id = IO.read(:line) |> String.trim()
+
+    IO.write("   Nombre del mentor: ")
+    nombre = IO.read(:line) |> String.trim()
+
+    IO.write("   Especialidades (separadas por coma): ")
+    especialidades = IO.read(:line) |> String.trim() |> String.split(",") |> Enum.map(&String.trim/1)
+
+    case Hackathon.MentorshipSystem.register_mentor(mentor_id, nombre, especialidades) do
+      {:ok, mentor} ->
+        IO.puts("\e[32m Mentor registrado: #{mentor.name}\e[0m")
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    mentoría_menu()
+  end
+
+  defp asignar_mentor do
+    IO.puts("\n ASIGNAR MENTOR A EQUIPO")
+    IO.write("   ID del equipo: ")
+    equipo_id = IO.read(:line) |> String.trim()
+
+    IO.write("   ID del mentor: ")
+    mentor_id = IO.read(:line) |> String.trim()
+
+    case Hackathon.MentorshipSystem.assign_mentor_to_team(equipo_id, mentor_id) do
+      {:ok, _} ->
+        IO.puts("\e[32m Mentor asignado al equipo\e[0m")
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    mentoría_menu()
+  end
+
+  defp enviar_consulta do
+    IO.puts("\n ENVIAR CONSULTA")
+    IO.write("   ID del equipo: ")
+    equipo_id = IO.read(:line) |> String.trim()
+
+    IO.write("   Consulta: ")
+    consulta = IO.read(:line) |> String.trim()
+
+    :ok = Hackathon.MentorshipSystem.send_inquiry(equipo_id, consulta)
+    IO.puts("\e[32m Consulta enviada\e[0m")
+
+    mentoría_menu()
+  end
+
+  defp enviar_feedback do
+    IO.puts("\n ENVIAR FEEDBACK")
+    IO.write("   ID del mentor: ")
+    mentor_id = IO.read(:line) |> String.trim()
+
+    IO.write("   ID del equipo: ")
+    equipo_id = IO.read(:line) |> String.trim()
+
+    IO.write("   Feedback: ")
+    feedback = IO.read(:line) |> String.trim()
+
+    case Hackathon.MentorshipSystem.send_feedback(mentor_id, equipo_id, feedback) do
+      {:ok, _} ->
+        IO.puts("\e[32m Feedback enviado\e[0m")
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    mentoría_menu()
+  end
+
+  defp ver_feedback_equipo do
+    IO.puts("\n VER FEEDBACK DE EQUIPO")
+    IO.write("   ID del equipo: ")
+    equipo_id = IO.read(:line) |> String.trim()
+
+    case Hackathon.MentorshipSystem.get_team_feedback(equipo_id) do
+      {:ok, feedbacks} ->
+        if Enum.empty?(feedbacks) do
+          IO.puts("   No hay feedback para este equipo")
+        else
+          IO.puts("   Feedback para el equipo #{equipo_id}:")
+          Enum.each(feedbacks, fn fb ->
+            IO.puts("    #{fb.feedback}")
+            IO.puts("     Mentor: #{fb.mentor_id}")
+            IO.puts("")
+          end)
+        end
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    mentoría_menu()
+  end
+
 end
 
 # Iniciar el sistema interactivo
