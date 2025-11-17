@@ -703,6 +703,22 @@ defmodule HackathonInteractive do
     main_menu()
   end
 
+  defp demo_step(mensaje, delay) do
+    IO.puts("   #{mensaje}")
+    :timer.sleep(delay)
+  end
+
+  defp salir do
+    IO.puts("""
+    \n\e[36m
+    Hackaton finalizado
+    =====================
+
+    ¡Hasta la próxima!
+    \e[0m
+    """)
+    System.halt(0)
+  end
 end
 
 # Iniciar el sistema interactivo
