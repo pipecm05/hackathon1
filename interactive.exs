@@ -372,6 +372,117 @@ defmodule HackathonInteractive do
     proyectos_menu()
   end
 
+
+  # 4. MENÚ DE CHAT
+  defp chat_menu do
+    IO.puts("""
+    \n\e[34m
+     SISTEMA DE CHAT
+    ==================
+
+    1. Crear sala de chat
+    2. Unirse a sala
+    3. Enviar mensaje
+    4. Ver historial de mensajes
+    5. Volver al menú principal
+    \e[0m
+    """)
+
+    IO.write(" Selecciona una opción (1-5): ")
+
+    case IO.read(:line) |> String.trim() do
+      "1" -> crear_sala_chat()
+      "2" -> unirse_sala_chat()
+      "3" -> enviar_mensaje_chat()
+      "4" -> ver_historial_chat()
+      "5" -> main_menu()
+      _ ->
+        IO.puts("\e[31m Opción inválida\e[0m")
+        chat_menu()
+    end
+  end
+
+  defp crear_sala_chat do
+    IO.puts("\n CREAR SALA DE CHAT")
+    IO.write("   Nombre de la sala: ")
+    sala = IO.read(:line) |> String.trim()
+
+    IO.write("   Tema de la sala: ")
+    tema = IO.read(:line) |> String.trim()
+
+    case Hackathon.ChatSystem.create_room(sala, tema) do
+      {:ok, _} ->
+        IO.puts("\e[32m Sala creada: #{sala} - #{tema}\e[0m")
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    chat_menu()
+  end
+
+  defp unirse_sala_chat do
+    IO.puts("\n UNIRSE A SALA DE CHAT")
+    IO.write("   Nombre de la sala: ")
+    sala = IO.read(:line) |> String.trim()
+
+    IO.write("   Tu ID de usuario: ")
+    usuario_id = IO.read(:line) |> String.trim()
+
+    IO.write("   Tu nombre: ")
+    nombre = IO.read(:line) |> String.trim()
+
+    case Hackathon.ChatSystem.join_room(sala, usuario_id, nombre) do
+      {:ok, _} ->
+        IO.puts("\e[32m Te uniste a la sala: #{sala}\e[0m")
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    chat_menu()
+  end
+
+  defp enviar_mensaje_chat do
+    IO.puts("\n ENVIAR MENSAJE DE CHAT")
+    IO.write("   Sala: ")
+    sala = IO.read(:line) |> String.trim()
+
+    IO.write("   Tu ID de usuario: ")
+    usuario_id = IO.read(:line) |> String.trim()
+
+    IO.write("   Mensaje: ")
+    mensaje = IO.read(:line) |> String.trim()
+
+    :ok = Hackathon.ChatSystem.send_message(sala, usuario_id, mensaje)
+    IO.puts("\e[32m Mensaje enviado a #{sala}\e[0m")
+
+    chat_menu()
+  end
+
+  defp ver_historial_chat do
+    IO.puts("\n VER HISTORIAL DE CHAT")
+    IO.write("   Sala: ")
+    sala = IO.read(:line) |> String.trim()
+
+    IO.write("   Límite de mensajes: ")
+    limite = IO.read(:line) |> String.trim() |> String.to_integer()
+
+    case Hackathon.ChatSystem.get_message_history(sala, limite) do
+      {:ok, mensajes} ->
+        if Enum.empty?(mensajes) do
+          IO.puts("   No hay mensajes en esta sala")
+        else
+          IO.puts("   Mensajes en #{sala}:")
+          Enum.each(mensajes, fn mensaje ->
+            IO.puts("   #{mensaje.participant_name}: #{mensaje.content}")
+          end)
+        end
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    chat_menu()
+  end
+
 end
 
 # Iniciar el sistema interactivo
