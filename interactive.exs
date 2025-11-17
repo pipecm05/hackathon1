@@ -647,6 +647,62 @@ defmodule HackathonInteractive do
     main_menu()
   end
 
+  # 7. MODO AUTOMÁTICO - DEMO COMPLETA
+  defp modo_automatico do
+    IO.puts("""
+    \n\e[33m
+     MODO AUTOMÁTICO - DEMOSTRACIÓN AUTOMATICA COMPLETA
+    ==========================================
+    \e[0m
+    """)
+
+    demo_step("1.Creando participantes de ejemplo...", 500)
+    Hackathon.TeamManagement.register_participant("auto1", "Juan Automático", "juan@demo.com")
+    Hackathon.TeamManagement.register_participant("auto2", "María Demo", "maria@demo.com")
+
+    demo_step("2. Creando equipos automáticos...", 500)
+    Hackathon.TeamManagement.create_team("auto_team", "Equipo Automático", "auto1", "Demo")
+    Hackathon.TeamManagement.join_team("auto2", "auto_team")
+
+    demo_step("3.Registrando proyecto demo...", 500)
+    Hackathon.ProjectRegistry.register_project("auto_team", "Proyecto Demo",
+      "Proyecto de demostración automática", "Demo")
+
+    demo_step("4.Actualizando progreso...", 500)
+    Hackathon.ProjectRegistry.update_project("auto_team", "Primera actualización automática")
+    Hackathon.ProjectRegistry.update_project("auto_team", "Segundo avance del proyecto")
+
+    demo_step("5. Probando chat...", 500)
+    Hackathon.ChatSystem.create_room("demo_auto", "Sala de demostración automática")
+    Hackathon.ChatSystem.join_room("demo_auto", "auto1", "Juan")
+    Hackathon.ChatSystem.send_message("demo_auto", "auto1", "¡Hola desde el modo automático!")
+
+    demo_step("6. Configurando mentoría...", 500)
+    Hackathon.MentorshipSystem.register_mentor("auto_mentor", "Mentor Automático", ["Demo", "Testing"])
+    Hackathon.MentorshipSystem.send_feedback("auto_mentor", "auto_team", "¡Excelente trabajo equipo automático!")
+
+    IO.puts("""
+    \n\e[32m
+    DEMOSTRACIÓN AUTOMÁTICA COMPLETADA
+    =====================================
+
+    Se crearon:
+    • 2 participantes nuevos
+    • 1 equipo automático
+    • 1 proyecto demo
+    • 2 actualizaciones de progreso
+    • 1 sala de chat con mensaje
+    • 1 mentor con feedback
+
+    ¡El sistema funciona perfectamente!
+    \e[0m
+    """)
+
+    IO.write("\nPresiona Enter para volver al menú principal...")
+    IO.read(:line)
+    main_menu()
+  end
+
 end
 
 # Iniciar el sistema interactivo
