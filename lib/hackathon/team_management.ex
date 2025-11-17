@@ -81,4 +81,75 @@ defmodule Hackathon.TeamManagement do
         {:reply, {:ok, team}, new_state}
     end
   end
+
+
+  def handle_call({:join_team, participant_id, team_id}, _from, state) do
+    with %{} <- Map.get(state.participants, participant_id),
+         %{} = team <- Map.get(state.teams, team_id),
+         true <- team.status == :active do
+
+      current_participants = Map.get(state.team_participants, team_id, [])
+
+      if participant_id in current_participants do
+        {:reply, {:error, "Ya estás en este equipo"}, state}
+      else
+        updated_participants = [participant_id | current_participants]
+        updated_team = Map.put(team, :participant_count, length(updated_participants))
+
+        new_teams = Map.put(state.teams, team_id, updated_team)
+        new_team_participants = Map.put(state.team_participants, team_id, updated_participants)
+
+        new_state = %{state |
+          teams: new_teams,
+          team_participants: new_team_participants
+        }
+
+        participant = Map.get(state.participants, participant_id)
+        IO.puts("#{participant.name} se unió al equipo #{team.name}")
+        {:reply, {:ok, updated_team}, new_state}
+      end
+    else
+      nil -> {:reply, {:error, "Participante o equipo no encontrado"}, state}
+      _ -> {:reply, {:error, "Equipo no activo"}, state}
+    end
+  end
+
+  def handle_call(:list_teams, _from, state) do
+    active_teams = state.teams
+    |> Map.values()
+    |> Enum.filter(fn team -> team.status == :active end)
+    |> Enum.map(fn team ->
+      participant_count = length(Map.get(state.team_participants, team.id, []))
+      Map.put(team, :participant_count, participant_count)
+    end)
+
+    {:reply, {:ok, active_teams}, state}
+  end
+
+  def handle_call({:list_teams_by_category, category}, _from, state) do
+    teams = state.teams
+    |> Map.values()
+    |> Enum.filter(fn team ->
+      team.category == category and team.status == :active
+    end)
+    |> Enum.map(fn team ->
+      participant_count = length(Map.get(state.team_participants, team.id, []))
+      Map.put(team, :participant_count, participant_count)
+    end)
+
+    {:reply, {:ok, teams}, state}
+  end
+
+  def handle_call({:get_team, team_id}, _from, state) do
+    case Map.get(state.teams, team_id) do
+      nil -> {:reply, {:error, "Equipo no encontrado"}, state}
+      team ->
+        participants = Map.get(state.team_participants, team_id, [])
+        |> Enum.map(fn pid -> Map.get(state.participants, pid) end)
+        |> Enum.filter(fn p -> p != nil end)
+
+        team_with_participants = Map.put(team, :participants, participants)
+        {:reply, {:ok, team_with_participants}, state}
+    end
+  end
 end
