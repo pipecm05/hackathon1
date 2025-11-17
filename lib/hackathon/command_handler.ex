@@ -48,5 +48,36 @@ defmodule Hackathon.CommandHandler do
     {:reply, response, state}
   end
 
+  defp parse_command("/teams " <> category), do: {:teams, String.trim(category)}
+  defp parse_command("/teams"), do: {:teams}
+  defp parse_command("/project " <> team_name), do: {:project, String.trim(team_name)}
+  defp parse_command("/join " <> team_name), do: {:join, String.trim(team_name)}
+  defp parse_command("/chat " <> room_name), do: {:chat, String.trim(room_name)}
+  defp parse_command("/help"), do: {:help}
+  defp parse_command(cmd), do: {:unknown, cmd}
+
+  defp handle_teams_command do
+    case Hackathon.TeamManagement.list_teams() do
+      {:ok, teams} ->
+        teams
+        |> Enum.map(&format_team/1)
+        |> Enum.join("\n")
+        |> wrap_response("Equipos activos:")
+
+      {:error, reason} -> "Error: #{reason}"
+    end
+  end
+
+  defp handle_teams_by_category_command(category) do
+    case Hackathon.TeamManagement.list_teams_by_category(category) do
+      {:ok, teams} ->
+        teams
+        |> Enum.map(&format_team/1)
+        |> Enum.join("\n")
+        |> wrap_response("Equipos en categoría #{category}:")
+
+      {:error, reason} -> "Error: #{reason}"
+    end
+  end
 
 end
