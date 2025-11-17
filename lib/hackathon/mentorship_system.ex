@@ -51,4 +51,63 @@ defmodule Hackathon.MentorshipSystem do
     IO.puts("Mentor registrado: #{name} - #{inspect(expertise)}")
     {:reply, {:ok, mentor}, new_state}
   end
+
+  def handle_call({:assign_mentor_to_team, team_id, mentor_id}, _from, state) do
+    with %{} <- Map.get(state.mentors, mentor_id),
+         true <- Map.get(state.mentors, mentor_id).status == :active do
+
+      new_team_mentors = Map.put(state.team_mentors, team_id, mentor_id)
+      new_state = %{state | team_mentors: new_team_mentors}
+      mentor = Map.get(state.mentors, mentor_id)
+      IO.puts("Mentor #{mentor.name} asignado al equipo #{team_id}")
+      {:reply, {:ok, :assigned}, new_state}
+    else
+      _ -> {:reply, {:error, "Mentor no disponible"}, state}
+    end
+  end
+
+  def handle_call({:send_feedback, mentor_id, team_id, feedback}, _from, state) do
+    feedback_record = %{
+      id: "feedback_#{:rand.uniform(1000000)}",
+      mentor_id: mentor_id,
+      team_id: team_id,
+      feedback: feedback,
+      timestamp: :os.system_time(:seconds)
+    }
+
+    team_feedback = Map.get(state.feedback_history, team_id, [])
+    updated_feedback = [feedback_record | team_feedback]
+    new_feedback_history = Map.put(state.feedback_history, team_id, updated_feedback)
+
+    new_state = %{state | feedback_history: new_feedback_history}
+    mentor = Map.get(state.mentors, mentor_id)
+    IO.puts("Feedback de #{mentor.name} para equipo #{team_id}")
+    {:reply, {:ok, feedback_record}, new_state}
+  end
+
+  def handle_call({:get_team_feedback, team_id}, _from, state) do
+    feedback = Map.get(state.feedback_history, team_id, [])
+    |> Enum.sort_by(& &1.timestamp)
+
+    {:reply, {:ok, feedback}, state}
+  end
+
+  def handle_cast({:send_inquiry, team_id, question}, state) do
+    _inquiry = %{
+    team_id: team_id,
+    question: question,
+    timestamp: :os.system_time(:seconds),
+    status: :pending
+  }
+
+    case Map.get(state.team_mentors, team_id) do
+      nil ->
+        IO.puts("Consulta del equipo #{team_id}: #{question} (buscando mentores disponibles)")
+      mentor_id ->
+        mentor = Map.get(state.mentors, mentor_id)
+        IO.puts("Consulta del equipo #{team_id} para mentor #{mentor.name}: #{question}")
+    end
+
+    {:noreply, state}
+  end
 end
