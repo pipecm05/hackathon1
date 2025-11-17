@@ -59,4 +59,44 @@ defmodule Hackathon.ProjectRegistry do
     IO.puts("Proyecto registrado: #{project_name} por equipo #{team_id}")
     {:reply, {:ok, project}, new_state}
   end
+
+  def handle_call({:get_projects_by_category, category}, _from, state) do
+    projects = state.projects
+    |> Map.values()
+    |> Enum.filter(fn project ->
+      project.category == category and project.status == :active
+    end)
+
+    {:reply, {:ok, projects}, state}
+  end
+
+  def handle_call({:get_team_project, team_id}, _from, state) do
+    case Map.get(state.team_projects, team_id) do
+      nil -> {:reply, {:error, "No se encontró proyecto para este equipo"}, state}
+      project_id ->
+        project = Map.get(state.projects, project_id)
+        {:reply, {:ok, project}, state}
+    end
+  end
+
+  def handle_cast({:update_project, team_id, update_message}, state) do
+    case Map.get(state.team_projects, team_id) do
+      nil -> {:noreply, state}
+      project_id ->
+        project = Map.get(state.projects, project_id)
+        update = %{
+          message: update_message,
+          timestamp: :os.system_time(:seconds)
+        }
+
+        updated_updates = [update | project.updates]
+        updated_project = Map.put(project, :updates, updated_updates)
+        new_projects = Map.put(state.projects, project_id, updated_project)
+
+        new_state = %{state | projects: new_projects}
+
+        IO.puts("Actualización de proyecto #{project.name}: #{update_message}")
+        {:noreply, new_state}
+    end
+  end
 end
