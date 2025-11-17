@@ -63,4 +63,39 @@ defmodule Hackathon.ChatSystem do
     IO.puts("Sala temática creada: #{room_name} - #{topic}")
     {:reply, {:ok, room}, new_state}
   end
+
+    def handle_call({:get_message_history, room_name, limit}, _from, state) do
+    messages = Map.get(state.messages, room_name, [])
+    |> Enum.take(limit)
+    |> Enum.reverse()
+
+    {:reply, {:ok, messages}, state}
+  end
+
+  def handle_cast({:send_message, room_name, participant_id, message}, state) do
+    case Map.get(state.room_participants, room_name) do
+      nil -> {:noreply, state}
+      participants ->
+        case Map.get(participants, participant_id) do
+          nil -> {:noreply, state}
+          participant_name ->
+            chat_message = %{
+              id: "msg_#{:rand.uniform(1000000)}",
+              participant_id: participant_id,
+              participant_name: participant_name,
+              content: message,
+              timestamp: :os.system_time(:seconds),
+              room: room_name
+            }
+
+            current_messages = Map.get(state.messages, room_name, [])
+            new_messages = [chat_message | current_messages] |> Enum.take(100)
+            new_messages_map = Map.put(state.messages, room_name, new_messages)
+
+            IO.puts(" [#{room_name}] #{participant_name}: #{message}")
+            new_state = %{state | messages: new_messages_map}
+            {:noreply, new_state}
+        end
+    end
+  end
 end
