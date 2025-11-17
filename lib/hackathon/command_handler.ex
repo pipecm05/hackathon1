@@ -80,4 +80,64 @@ defmodule Hackathon.CommandHandler do
     end
   end
 
+  defp handle_project_command(team_name) do
+    case Hackathon.ProjectRegistry.get_team_project(team_name) do
+      {:ok, project} -> format_project_response(project)
+      {:error, reason} -> "Error: #{reason}"
+    end
+  end
+
+  defp handle_join_command(team_name, user_id) do
+    case Hackathon.TeamManagement.join_team(user_id, team_name) do
+      {:ok, team} -> "Te has unido al equipo: #{team.name}"
+      {:error, reason} -> "Error: #{reason}"
+    end
+  end
+
+  defp handle_chat_command(room_name, user_id) do
+    case Hackathon.ChatSystem.join_room(room_name, user_id, get_user_name(user_id)) do
+      {:ok, room} -> "Conectado a la sala: #{room.name} - #{room.topic}"
+      {:error, reason} -> "Error: #{reason}"
+    end
+  end
+
+  defp handle_help_command do
+    """
+    **Comandos disponibles:**
+
+    `/teams` - Listar todos los equipos activos
+    `/teams [categoría]` - Listar equipos por categoría
+    `/project [nombre_equipo]` - Mostrar información del proyecto de un equipo
+    `/join [nombre_equipo]` - Unirse a un equipo
+    `/chat [sala]` - Ingresar al canal de chat
+    `/help` - Mostrar esta ayuda
+
+    **Ejemplos:**
+    `/teams IA` - Listar equipos de Inteligencia Artificial
+    `/project QuantumCoders` - Ver proyecto del equipo QuantumCoders
+    `/join DataHackers` - Unirse al equipo DataHackers
+    """
+  end
+
+  defp format_team(team) do
+    "**#{team.name}** - #{team.category} (#{team.participant_count} miembros)"
+  end
+
+  defp format_project_response(project) do
+    """
+    **Proyecto: #{project.name}**
+    **Descripción:** #{project.description}
+    **Categoría:** #{project.category}
+    **Actualizaciones:** #{length(project.updates)}
+    **Feedback recibido:** #{length(project.feedback)}
+    """
+  end
+
+  defp wrap_response(content, title) do
+    "#{title}\n\n#{content}"
+  end
+
+  defp get_user_name(user_id) do
+    "Usuario#{String.slice(user_id, 0, 5)}"
+  end
 end
