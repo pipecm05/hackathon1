@@ -17,7 +17,7 @@ defmodule HackathonInteractive do
   end
 
   defp load_system do
-    IO.puts("📦 Cargando sistema Hackathon...")
+    IO.puts(" Cargando sistema Hackathon...")
 
     modules = [
       "lib/hackathon.ex",
@@ -132,6 +132,120 @@ defmodule HackathonInteractive do
     # En un sistema real aquí obtendrías la lista de participantes
     IO.puts(" Función en desarrollo...")
     participantes_menu()
+  end
+
+
+  # 2. MENÚ DE EQUIPOS
+  defp equipos_menu do
+    IO.puts("""
+    \n\e[34m
+    GESTIÓN DE EQUIPOS
+    =====================
+
+    1. Crear nuevo equipo
+    2. Unir participante a equipo
+    3. Listar todos los equipos
+    4. Buscar equipo por categoría
+    5. Volver al menú principal
+    \e[0m
+    """)
+
+    IO.write(" Selecciona una opción (1-5): ")
+
+    case IO.read(:line) |> String.trim() do
+      "1" -> crear_equipo()
+      "2" -> unir_a_equipo()
+      "3" -> listar_equipos()
+      "4" -> buscar_equipos_categoria()
+      "5" -> main_menu()
+      _ ->
+        IO.puts("\e[31m Opción inválida\e[0m")
+        equipos_menu()
+    end
+  end
+
+  defp crear_equipo do
+    IO.puts("\n🆕 CREAR NUEVO EQUIPO")
+    IO.write("   ID del equipo: ")
+    equipo_id = IO.read(:line) |> String.trim()
+
+    IO.write("   Nombre del equipo: ")
+    nombre = IO.read(:line) |> String.trim()
+
+    IO.write("   ID del creador: ")
+    creador_id = IO.read(:line) |> String.trim()
+
+    IO.write("   Categoría (IA, Web, Mobile, Data, Blockchain): ")
+    categoria = IO.read(:line) |> String.trim()
+
+    case Hackathon.TeamManagement.create_team(equipo_id, nombre, creador_id, categoria) do
+      {:ok, equipo} ->
+        IO.puts("\e[32m Equipo creado: #{equipo.name} - #{equipo.category}\e[0m")
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    equipos_menu()
+  end
+
+  defp unir_a_equipo do
+    IO.puts("\n UNIR PARTICIPANTE A EQUIPO")
+    IO.write("   ID del participante: ")
+    participante_id = IO.read(:line) |> String.trim()
+
+    IO.write("   ID del equipo: ")
+    equipo_id = IO.read(:line) |> String.trim()
+
+    case Hackathon.TeamManagement.join_team(participante_id, equipo_id) do
+      {:ok, equipo} ->
+        IO.puts("\e[32m Participante unido al equipo: #{equipo.name}\e[0m")
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    equipos_menu()
+  end
+
+  defp listar_equipos do
+    IO.puts("\n LISTA DE EQUIPOS:")
+
+    case Hackathon.TeamManagement.list_teams() do
+      {:ok, equipos} ->
+        if Enum.empty?(equipos) do
+          IO.puts("   No hay equipos registrados")
+        else
+          Enum.each(equipos, fn equipo ->
+            IO.puts("  #{equipo.name} - #{equipo.category} (#{equipo.participant_count} miembros)")
+          end)
+          IO.puts("    Total: #{length(equipos)} equipos")
+        end
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    equipos_menu()
+  end
+
+  defp buscar_equipos_categoria do
+    IO.puts("\n BUSCAR EQUIPOS POR CATEGORÍA")
+    IO.write("   Categoría (IA, Web, Mobile, Data, Blockchain): ")
+    categoria = IO.read(:line) |> String.trim()
+
+    case Hackathon.TeamManagement.list_teams_by_category(categoria) do
+      {:ok, equipos} ->
+        if Enum.empty?(equipos) do
+          IO.puts("   No hay equipos en la categoría: #{categoria}")
+        else
+          IO.puts("   Equipos en #{categoria}:")
+          Enum.each(equipos, fn equipo ->
+            IO.puts("    #{equipo.name} (#{equipo.participant_count} miembros)")
+          end)
+        end
+      {:error, razon} ->
+        IO.puts("\e[31m Error: #{razon}\e[0m")
+    end
+
+    equipos_menu()
   end
 end
 
