@@ -24,5 +24,21 @@ defmodule Hackathon.Auth do
     {:ok, state}
   end
 
-  
+  def handle_call({:authenticate, user_id, _token}, _from, state) do
+    session_id = "session_#{user_id}_#{:rand.uniform(1000000)}"
+    new_sessions = Map.put(state.sessions, session_id, %{user_id: user_id, created_at: :os.system_time(:seconds)})
+    new_state = %{state | sessions: new_sessions}
+    IO.puts("Usuario #{user_id} autenticado")
+    {:reply, {:ok, session_id}, new_state}
+  end
+
+  def handle_cast({:logout, user_id}, state) do
+    new_sessions = state.sessions
+    |> Enum.reject(fn {_session_id, session} -> session.user_id == user_id end)
+    |> Map.new()
+
+    new_state = %{state | sessions: new_sessions}
+    IO.puts("Usuario #{user_id} cerró sesión")
+    {:noreply, new_state}
+  end
 end
